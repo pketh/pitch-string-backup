@@ -1,0 +1,27 @@
+section.analytics
+  h2 Stats
+  - # move (or copy) marketing sell or an about/info box here
+  - # stat data is randomly skewed and only shows the last 2 days
+
+  - # get full data for your own team with 'glitch for platforms'
+  - # .chart-container
+  - #   #remixes-chart.chart
+  
+  .chart-container
+    h3
+      - # span= "#{@visitsTotal()} Visits Over the #{@timeFrameName()}"
+      span= "Visits"
+      span.emoji.emoji-in-title.microphone
+    button.button-small.button-tertiary Last 2 Weeks
+    button.button-small.button-tertiary All Projects
+    #visits-chart.chart
+    
+    h3 From
+    - # .referrers.referrers-visits
+    - #   - @visitsReferrers().forEach (referrer) ->
+    - #     .referrer-item-wrap
+    - #       .referrer-bar(style="width: #{referrer.relativeSize}%")
+    - #         p.referrer-info= "#{referrer.requests} - #{referrer.domain}"
+
+    script(src="https://cdn.plot.ly/plotly-latest.min.js")
+    
