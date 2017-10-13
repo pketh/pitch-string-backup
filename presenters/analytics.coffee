@@ -8,7 +8,7 @@ _ = require 'underscore'
 
 AnalyticsTemplate = require "../templates/includes/analytics"
 AnalyticsTimePopPresenter = require "./pop-overs/analytics-time-pop"
-# AnalyticsProjectsSelectPopPresenter = require "./pop-overs/analytics-projects-select"
+AnalyticsProjectsPopPresenter = require "./pop-overs/analytics-projects-pop"
 
 METRICS = ["remixes", "visits"]
 REFERRER_FIELDS = ["remixReferrers", "referrers"]
@@ -29,7 +29,10 @@ module.exports = (application, teamOrProject) ->
   self = 
   
     analyticsTimeLabel: application.analyticsTimeLabel
-  
+    analyticsProjectDomain: application.analyticsProjectDomain
+    analyticsTimePop: AnalyticsTimePopPresenter application
+    analyticsProjectsPop: AnalyticsProjectsPopPresenter application
+
     remixesChartElement: document.createElement 'div'
     remixesReferrersBars: document.createElement 'referrer-bars'
   
@@ -135,14 +138,14 @@ module.exports = (application, teamOrProject) ->
         self.totalRemixes total
         Plotly.newPlot self.remixesChartElement, lines, layout, options
       else
-        self.remixesChart.innerHTML = "<b>No remixes in the selected timespan</b>"
+        self.remixesChart.innerHTML = "<b>No remixes in the selected timespan</b>" # replace with local observables that trigger error state in template                    
 
       if visitsData[3] > 0
         [lines, layout, options, total] = visitsData
         self.totalVisits total
         Plotly.newPlot self.visitsChartElement, lines, layout, options
       else
-        self.visitsChart.innerHTML = "<b>No visits in the selected timespan</b>"
+        self.visitsChart.innerHTML = "<b>No visits in the selected timespan</b>" # replace with local observables that trigger error state in template
 
     drawReferrers: (analyticsData) ->
       args = REFERRER_FIELDS.map (field, i) ->
@@ -182,6 +185,7 @@ module.exports = (application, teamOrProject) ->
           plot_bgcolor: BACKGROUND_COLOR
           font:
             family: '"Benton Sans",Helvetica,Sans-serif'
+            size: 14
           margin:
             l: 0
             r: 10
@@ -225,15 +229,17 @@ module.exports = (application, teamOrProject) ->
 
     plotlyLoad: (e) ->
       console.log "Plotly Load", e
+      self.getAnalyticsData()
 
     getAnalyticsData: (fromDate, projectDomain) ->
+      # TODO: We can get the analytics data before plotly finishes loading
       id = teamOrProject.id()
       CancelToken = axios.CancelToken
       source = CancelToken.source()
-      if projectDomain
-        analyticsPath = "analytics/#{id}/project/#{projectDomain}?from=#{fromDate}"
+      if application.analyticsProjectDomain() is 'All Projects'
+        analyticsPath = "analytics/#{id}/team?from=#{application.analyticsFromDate()}"
       else
-        analyticsPath = "analytics/#{id}/team?from=#{fromDate}"
+        analyticsPath = "analytics/#{id}/project/#{application.analyticsProjectDomain()}?from=#{application.analyticsFromDate()}"
 
       application.api(source).get analyticsPath
       .then ({data}) ->
@@ -243,35 +249,21 @@ module.exports = (application, teamOrProject) ->
         self.analyticsData data
         self.mapChartData data
         console.log "▶️ self.chartData", self.chartData()
+        # TODO: Let the charts redraw themselves rather than redraw them manually
         self.drawCharts(self.chartData())
         self.drawReferrers(self.analyticsData())
       .catch (error) ->
         console.error 'getAnalyticsData', error
 
-    toggleAnalyticsTimePopVisits: (event) ->
+    toggleAnalyticsTimePop: (event) ->
       event.stopPropagation()
-      application.gettingAnalyticsProjectDomain false
-      application.analyticsChartType 'visits'
+      application.analyticsProjectsPopVisible false
       application.analyticsTimePopVisible.toggle()
 
-    toggleAnalyticsTimePopRemixes: (event) ->
-      event.stopPropagation()
-      application.gettingAnalyticsProjectDomain false
-      application.analyticsChartType 'remixes'
-      application.analyticsTimePopVisible.toggle()
-
-    analyticsTimePopVisits: -> 
-      AnalyticsTimePopPresenter application, 'visits'
-
-    analyticsTimePopRemixes: ->
-      AnalyticsTimePopPresenter application, 'remixes'
-      
-
-      
-    toggleAnalyticsProjectDomain: (event) ->
+    toggleAnalyticsProjectsPop: (event) ->
       event.stopPropagation()
       application.analyticsTimePopVisible false
-      application.gettingAnalyticsProjectDomain.toggle()
+      application.analyticsProjectsPopVisible.toggle()
 
 #     hiddenIfGettingAnalytics: ->
 #       'hidden' if application.gettingAnalytics()
@@ -287,9 +279,6 @@ module.exports = (application, teamOrProject) ->
     Plotly.Plots.resize(self.remixesReferrersBars)
     Plotly.Plots.resize(self.visitsChartElement)
     Plotly.Plots.resize(self.visitsReferrersBars)
-  , 50
-
-  if typeof Plotly != undefined
-    self.getAnalyticsData application.analyticsFromDate()
+  , 50    
 
   return AnalyticsTemplate self

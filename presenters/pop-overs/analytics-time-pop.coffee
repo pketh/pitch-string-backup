@@ -6,16 +6,14 @@ twoWeeks = moment().subtract(2, 'weeks').valueOf()
 oneMonth = moment().subtract(1, 'months').valueOf()
 oneDay = moment().subtract(24, 'hours').valueOf()
 
-module.exports = (application, chartType) ->
+module.exports = (application) ->
 
   self =
   
     application: application
   
     hiddenUnlessAnalyticsTimePopVisible: ->
-      if !application.analyticsTimePopVisible() and chartType != application.analyticsChartType()
-        'hidden'
-      # 'hidden' unless application.analyticsTimePopVisible()
+      'hidden' unless application.analyticsTimePopVisible()
 
     stopPropagation: (event) ->
       event.stopPropagation()

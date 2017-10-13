@@ -39,6 +39,7 @@ self = Model(
   addTeamUserPopVisible: Observable false
   addTeamProjectPopVisible: Observable false
   analyticsTimePopVisible: Observable false
+  analyticsProjectsPopVisible: Observable false
 
   # search - users
   searchQuery: Observable ""
@@ -64,9 +65,8 @@ self = Model(
   gettingAnalyticsFromDate: Observable false
   gettingAnalyticsProjectDomain: Observable false
   analyticsFromDate: Observable 0
-  analyticsProjectDomain: Observable '' #
+  analyticsProjectDomain: Observable 'All Projects'
   analyticsTimeLabel: Observable 'Last 2 Weeks'
-  analyticsChartType: ""
 
   # questions
   questions: Observable []
@@ -75,7 +75,7 @@ self = Model(
   # pages
   pageIsTeamPage: Observable false
   pageIsUserPage: Observable false
-  
+
   # category page
   category: Observable {}
   categoryProjectsLoaded: Observable false

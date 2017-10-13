@@ -1,34 +1,36 @@
+- Loader = require "./loader"
+
 section.analytics
-  script(src="https://cdn.plot.ly/plotly-latest.min.js" load=@plotlyLoad)
+  script(src="https://cdn.plot.ly/plotly-latest.min.js" load=@plotlyLoad async="4eva")
 
   h2 Stats
   
-  - if @chartData()?[0]
-    .chart-container
-      h3
-        span= "#{@totalRemixes()} Remixes Over #{@analyticsTimeLabel()}"
-        span.emoji.emoji-in-title.microphone
-      .button-wrap
-        button.button-small.button-tertiary.button-select(click=@toggleAnalyticsTimePopVisits)= @analyticsTimeLabel
-        = @analyticsTimePopVisits
-      .button-wrap
-        button.button-small.button-tertiary All Projects
-      = @remixesChartElement
-      - if @showRemixesReferrers
-        h3 From
-        = @remixesReferrersBars
+  .chart-container
+    h3
+      span= "#{@totalRemixes()} Remixes Over #{@analyticsTimeLabel()}"
+      span.emoji.emoji-in-title.microphone
+    .button-wrap
+      button.button-small.button-tertiary.button-select(click=@toggleAnalyticsTimePop)= @analyticsTimeLabel               
+      = @analyticsTimePop
+    .button-wrap
+      button.button-small.button-tertiary(click=@toggleAnalyticsProjectsPop)= @analyticsProjectDomain
+      = @analyticsProjectsPop
+    = @remixesChartElement
+    - if @showRemixesReferrers
+      h3 From
+      = @remixesReferrersBars
   
-  - if @chartData()?[1]
-    .chart-container
-      h3
-        span= "#{@totalVisits()} Visits Over #{@analyticsTimeLabel()}"
-        span.emoji.emoji-in-title.eyes
-      .button-wrap
-        button.button-small.button-tertiary.button-select(click=@toggleAnalyticsTimePopRemixes)= @analyticsTimeLabel
-        = @analyticsTimePopRemixes
-      .button-wrap
-        button.button-small.button-tertiary All Projects
-      = @visitsChartElement
-      - if @showVisitsReferrers
-        h3 From
-        = @visitsReferrersBars
+  .chart-container
+    h3
+      span= "#{@totalVisits()} Visits Over #{@analyticsTimeLabel()}"
+      span.emoji.emoji-in-title.eyes
+    .button-wrap
+      button.button-small.button-tertiary.button-select(click=@toggleAnalyticsTimePop)= @analyticsTimeLabel
+      = @analyticsTimePop
+    .button-wrap
+      button.button-small.button-tertiary(click=@toggleAnalyticsProjectsPop)= @analyticsProjectDomain
+      = @analyticsProjectsPop
+    = @visitsChartElement
+    - if @showVisitsReferrers
+      h3 From
+      = @visitsReferrersBars
