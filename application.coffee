@@ -38,27 +38,35 @@ self = Model(
   ctaPopVisible: Observable false
   addTeamUserPopVisible: Observable false
   addTeamProjectPopVisible: Observable false
+  analyticsTimePopVisible: Observable false
 
-  # search
+  # search - users
   searchQuery: Observable ""
   searchingForUsers: Observable false
   searchResultsUsers: Observable []
   searchResultsUsersLoaded: Observable false
   searchResultsHaveNoUsers: Observable false
 
+  # search - projects
   searchingForProjects: Observable false
   searchResultsProjects: Observable []
   searchResultsProjectsLoaded: Observable false
   searchResultsHaveNoProjects: Observable false
 
+  # search - teams
   searchingForTeams: Observable false
   searchResultsTeams: Observable []
   searchResultsTeamsLoaded: Observable false
   searchResultsHaveNoTeams: Observable false
-  
+
   # analytics
-  gettingAnalytics: Observable false
-  
+  gettingAnalytics: Observable true
+  gettingAnalyticsFromDate: Observable false #
+  gettingAnalyticsProjectDomain: Observable false # 
+  analyticsFromDate: Observable 0
+  analyticsProjectDomain: Observable '' #
+  analyticsTimeLabel: Observable 'Last 2 Weeks'
+
   # questions
   questions: Observable []
   gettingQuestions: Observable false
@@ -72,7 +80,7 @@ self = Model(
   categoryProjectsLoaded: Observable false
 
   # notifications
-  notifyUserDescriptionUpdated: Observable false # unused
+  notifyUserDescriptionUpdated: Observable false # unused, to remove
   notifyUploading: ->
     self.uploadFilesRemaining() > 0
   notifyUploadFailure: Observable false
@@ -112,6 +120,7 @@ self = Model(
     self.addTeamProjectPopVisible false
     self.overlayProjectVisible false
     self.overlayVideoVisible false
+    self.analyticsTimePopVisible false
 
   searchProjects: (query) ->
     self.searchResultsProjects []

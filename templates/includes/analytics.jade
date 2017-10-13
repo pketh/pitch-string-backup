@@ -1,27 +1,31 @@
 section.analytics
+  script(src="https://cdn.plot.ly/plotly-latest.min.js")
+
   h2 Stats
-  - # move (or copy) marketing sell or an about/info box here
-  - # stat data is randomly skewed and only shows the last 2 days
-
-  - # get full data for your own team with 'glitch for platforms'
-  - # .chart-container
-  - #   #remixes-chart.chart
   
-  .chart-container
-    h3
-      - # span= "#{@visitsTotal()} Visits Over the #{@timeFrameName()}"
-      span= "Visits"
-      span.emoji.emoji-in-title.microphone
-    button.button-small.button-tertiary Last 2 Weeks
-    button.button-small.button-tertiary All Projects
-    #visits-chart.chart
-    
-    h3 From
-    - # .referrers.referrers-visits
-    - #   - @visitsReferrers().forEach (referrer) ->
-    - #     .referrer-item-wrap
-    - #       .referrer-bar(style="width: #{referrer.relativeSize}%")
-    - #         p.referrer-info= "#{referrer.requests} - #{referrer.domain}"
-
-    script(src="https://cdn.plot.ly/plotly-latest.min.js")
-    
+  - if @chartData()?[0]
+    .chart-container
+      h3
+        span= "#{@totalRemixes()} Remixes Over #{@analyticsTimeLabel()}"
+        span.emoji.emoji-in-title.microphone
+      .button-wrap
+        button.button-small.button-tertiary.button-select(click=@toggleAnalyticsTimePop)= @analyticsTimeLabel
+        = @analyticsTimePopPresenter
+      .button-wrap
+        button.button-small.button-tertiary All Projects
+      = @remixesChart
+      - if @showRemixesReferrers
+        h3 From
+        = @remixesReferrersBars
+  
+  - if @chartData()?[1]
+    .chart-container
+      h3
+        span= "#{@totalVisits()} Visits Over #{@analyticsTimeLabel()}"
+        span.emoji.emoji-in-title.eyes
+      button.button.button-small.button-tertiary Last 2 Weeks
+      button.button-small.button-tertiary All Projects
+      = @visitsChart
+      - if @showVisitsReferrers
+        h3 From
+        = @visitsReferrersBars
