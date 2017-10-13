@@ -66,6 +66,7 @@ self = Model(
   analyticsFromDate: Observable 0
   analyticsProjectDomain: Observable '' #
   analyticsTimeLabel: Observable 'Last 2 Weeks'
+  analyticsChartType: ""
 
   # questions
   questions: Observable []

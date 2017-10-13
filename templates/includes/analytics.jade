@@ -9,8 +9,8 @@ section.analytics
         span= "#{@totalRemixes()} Remixes Over #{@analyticsTimeLabel()}"
         span.emoji.emoji-in-title.microphone
       .button-wrap
-        button.button-small.button-tertiary.button-select(click=@toggleAnalyticsTimePop)= @analyticsTimeLabel
-        = @analyticsTimePopPresenter
+        button.button-small.button-tertiary.button-select(click=@toggleAnalyticsTimePopVisits)= @analyticsTimeLabel
+        = @analyticsTimePopVisits
       .button-wrap
         button.button-small.button-tertiary All Projects
       = @remixesChartElement
@@ -23,8 +23,11 @@ section.analytics
       h3
         span= "#{@totalVisits()} Visits Over #{@analyticsTimeLabel()}"
         span.emoji.emoji-in-title.eyes
-      button.button.button-small.button-tertiary Last 2 Weeks
-      button.button-small.button-tertiary All Projects
+      .button-wrap
+        button.button-small.button-tertiary.button-select(click=@toggleAnalyticsTimePopRemixes)= @analyticsTimeLabel
+        = @analyticsTimePopRemixes
+      .button-wrap
+        button.button-small.button-tertiary All Projects
       = @visitsChartElement
       - if @showVisitsReferrers
         h3 From

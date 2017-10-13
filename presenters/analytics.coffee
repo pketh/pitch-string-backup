@@ -29,7 +29,6 @@ module.exports = (application, teamOrProject) ->
   self = 
   
     analyticsTimeLabel: application.analyticsTimeLabel
-    analyticsTimePopPresenter: AnalyticsTimePopPresenter application
   
     remixesChartElement: document.createElement 'div'
     remixesReferrersBars: document.createElement 'referrer-bars'
@@ -44,7 +43,7 @@ module.exports = (application, teamOrProject) ->
     
     analyticsData: Observable {}
     chartData: Observable {}
-    
+
     # PK: width of what text? is this a character spacing thing?
     # ET: this is the method we use to calculate the left margin of the two charts
     #     this way, the two charts have the same left margin
@@ -116,13 +115,15 @@ module.exports = (application, teamOrProject) ->
             showgrid: true
             autorange: false
             fixedrange: true
-            range: [data.x[0].getTime() - 3600000, data.x[data.x.length-1].getTime() + 4 * 3600000]
+            range: [data.x[0].getTime() - 3600000, data.x[data.x.length-1].getTime() + 4 * 3600000]          
             tickangle: 1e-10 # to have it aligned to the right of the tick
           yaxis:
             fixedrange: true
             rangemode: "nonnegative"
             range: ranges[i]
             tickformat: ',dr'
+            zeroline: false
+
         options =
           displayModeBar: false
 
@@ -247,11 +248,26 @@ module.exports = (application, teamOrProject) ->
       .catch (error) ->
         console.error 'getAnalyticsData', error
 
-    toggleAnalyticsTimePop: (event) ->
+    toggleAnalyticsTimePopVisits: (event) ->
       event.stopPropagation()
       application.gettingAnalyticsProjectDomain false
+      application.analyticsChartType 'visits'
       application.analyticsTimePopVisible.toggle()
 
+    toggleAnalyticsTimePopRemixes: (event) ->
+      event.stopPropagation()
+      application.gettingAnalyticsProjectDomain false
+      application.analyticsChartType 'remixes'
+      application.analyticsTimePopVisible.toggle()
+
+    analyticsTimePopVisits: -> 
+      AnalyticsTimePopPresenter application, 'visits'
+
+    analyticsTimePopRemixes: ->
+      AnalyticsTimePopPresenter application, 'remixes'
+      
+
+      
     toggleAnalyticsProjectDomain: (event) ->
       event.stopPropagation()
       application.analyticsTimePopVisible false
