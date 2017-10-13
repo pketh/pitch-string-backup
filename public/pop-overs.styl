@@ -156,12 +156,22 @@
       display: block
 
 .analytics-time-pop
+  top: 22px
+  left: 8px
+  .result-container
+    padding-top: 3px
   .result
     &:hover
       background-color: file-info-secondary
-    .result-name
-      &:hover
+    &:active,
+    &.active
+      background-color: file-info
+      .result-name
         color: primary-background
+      
+      
+      
+
 // refactor this: used on user page for project-options-pop (only?)
 .project
   overflow-y: auto

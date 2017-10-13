@@ -18,21 +18,32 @@ module.exports = (application) ->
     stopPropagation: (event) ->
       event.stopPropagation()
 
+    selectMonthFrame: ->
+      application.analyticsTimeLabel 'Last Month'
+      application.analyticsFromDate oneMonth
+      application.gettingAnalyticsFromDate true
+      
     selectWeeksFrame: ->
       application.analyticsTimeLabel 'Last 2 Weeks'
       application.analyticsFromDate twoWeeks
       application.gettingAnalyticsFromDate true
     
-    selectMonthFrame: ->
-      application.analyticsTimeLabel 'Last Month'
-      application.analyticsFromDate oneMonth
-      application.gettingAnalyticsFromDate true
-
     selectHoursFrame: ->
       application.analyticsTimeLabel 'Last 24 Hours'
       application.analyticsFromDate oneDay
       application.gettingAnalyticsFromDate true
 
+    activeIfLabelIsMonths: ->
+      'active' if application.analyticsTimeLabel() is 'Last Month'
+        
+    activeIfLabelIsWeeks: ->
+      'active' if application.analyticsTimeLabel() is 'Last 2 Weeks'
 
-  application.analyticsFromDate twoWeeks
+    activeIfLabelIsHours: ->
+      'active' if application.analyticsTimeLabel() is 'Last 24 Hours'
+      
+
+  if !application.analyticsFromDate()
+    application.analyticsFromDate twoWeeks
+
   return AnalyticsTimePopTemplate self

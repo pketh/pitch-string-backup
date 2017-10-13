@@ -26,17 +26,16 @@ sum = (array) ->
   , 0
 
 module.exports = (application, teamOrProject) ->
-      
   self = 
   
     analyticsTimeLabel: application.analyticsTimeLabel
     analyticsTimePopPresenter: AnalyticsTimePopPresenter application
   
-    remixesChart: document.createElement 'div'
-    remixesReferrersBars: document.createElement 'div'
+    remixesChartElement: document.createElement 'div'
+    remixesReferrersBars: document.createElement 'referrer-bars'
   
-    visitsChart: document.createElement 'div'
-    visitsReferrersBars: document.createElement 'div'
+    visitsChartElement: document.createElement 'div'
+    visitsReferrersBars: document.createElement 'referrer-bars'
     
     showRemixesReferrers: Observable false
     totalRemixes: Observable 0
@@ -61,8 +60,8 @@ module.exports = (application, teamOrProject) ->
 
     # PK: not sure what's a param here. is it a plotly specific thing?
     # ET: they are chart params: the left margin and the y-range
-    calculateParams: ->
-      maxes = self.chartData().map (data) ->
+    calculateParams: (chartData) ->
+      maxes = chartData.map (data) ->
         Math.max data.y...
       digits = maxes.map (max) ->
         Math.ceil Math.log10 max
@@ -83,21 +82,18 @@ module.exports = (application, teamOrProject) ->
       ranges: maxes.map (max) ->
         if max >= 3 then undefined else [0, 3]
 
-    drawCharts: ->
+    drawCharts: (chartData) ->
       console.log 'Plotly ready', Plotly
-      {leftMargin, ranges} = self.calculateParams()
-      console.log 'calculateParams', self.calculateParams()
+      {leftMargin, ranges} = calculatedParams = self.calculateParams(chartData)
+      console.log 'calculateParams', calculatedParams
       
       # PK: instead of one big args object and unwrapping, would this be clearer if broken up into 
       # seperate graphdiv, data, and layout objects to pass to plotly so that'd it'd match the docs:
       # Plotly.newPlot(graphDiv, data, layout);
       
-      args = self.chartData().map (data, i) ->
+      [remixData, visitsData] = chartData.map (data, i) ->
         total = sum data.y
         console.log '🐬 chartdata total', total
-
-        unless total > 0
-          return null
 
         layout =
           paper_bgcolor: BACKGROUND_COLOR
@@ -131,33 +127,32 @@ module.exports = (application, teamOrProject) ->
           displayModeBar: false
 
         console.log '[[data], layout, options, total]', [[data], layout, options, total]
-        [[data], layout, options, total]
+        return [[data], layout, options, total]
 
-      console.log '🔥 args', args
-      if args[0]
-        [lines, layout, options, total] = args[0]
+      if remixData[3] > 0
+        [lines, layout, options, total] = remixData
         self.totalRemixes total
-        Plotly.newPlot self.remixesChart, lines, layout, options
+        Plotly.newPlot self.remixesChartElement, lines, layout, options
       else
-        self.remixesChart.innerHTML = "<b>No remixes in the selected timespan!</b>"
+        self.remixesChart.innerHTML = "<b>No remixes in the selected timespan</b>"
 
-      if args[1]
-        [lines, layout, options, total] = args[1]
+      if visitsData[3] > 0
+        [lines, layout, options, total] = visitsData
         self.totalVisits total
-        Plotly.newPlot self.visitsChart, lines, layout, options
+        Plotly.newPlot self.visitsChartElement, lines, layout, options
       else
         self.visitsChart.innerHTML = "<b>No visits in the selected timespan</b>"
 
-    drawReferrers: ->
+    drawReferrers: (analyticsData) ->
       args = REFERRER_FIELDS.map (field, i) ->
-        total = self.analyticsData()[field].reduce (a, b) ->
+        total = analyticsData[field].reduce (a, b) ->
           "#{REFERRER_VALUES[i]}": a[REFERRER_VALUES[i]] + b[REFERRER_VALUES[i]]
         , { "#{REFERRER_VALUES[i]}": 0 }
         total = total[REFERRER_VALUES[i]]
 
-        referrers = self.analyticsData()[field].filter (r, i) -> !r.self and i < 5
+        referrers = analyticsData[field].filter (r, i) -> !r.self and i < 5
         # invert them
-        referrers = referrers.map (r, i) -> referrers[referrers.length-i-1]
+        referrers = referrers.reverse()
         referrers = referrers.map (r) ->
           domain: r.domain
           value: r[REFERRER_VALUES[i]]
@@ -186,7 +181,6 @@ module.exports = (application, teamOrProject) ->
           plot_bgcolor: BACKGROUND_COLOR
           font:
             family: '"Benton Sans",Helvetica,Sans-serif'
-            color: "orange"
           margin:
             l: 0
             r: 10
@@ -228,13 +222,10 @@ module.exports = (application, teamOrProject) ->
         nbinsx: 28
       self.chartData chartData
 
+    plotlyLoad: (e) ->
+      console.log "Plotly Load", e
+
     getAnalyticsData: (fromDate, projectDomain) ->
-      # Plotly didn't load yet
-      unless window.Plotly
-        setTimeout ->
-          self.getAnalyticsData fromDate, projectDomain
-        , 50
-      
       id = teamOrProject.id()
       CancelToken = axios.CancelToken
       source = CancelToken.source()
@@ -242,6 +233,7 @@ module.exports = (application, teamOrProject) ->
         analyticsPath = "analytics/#{id}/project/#{projectDomain}?from=#{fromDate}"
       else
         analyticsPath = "analytics/#{id}/team?from=#{fromDate}"
+
       application.api(source).get analyticsPath
       .then ({data}) ->
         application.gettingAnalytics false
@@ -250,14 +242,20 @@ module.exports = (application, teamOrProject) ->
         self.analyticsData data
         self.mapChartData data
         console.log "▶️ self.chartData", self.chartData()
-        self.drawCharts()
-        self.drawReferrers()
+        self.drawCharts(self.chartData())
+        self.drawReferrers(self.analyticsData())
       .catch (error) ->
         console.error 'getAnalyticsData', error
 
     toggleAnalyticsTimePop: (event) ->
       event.stopPropagation()
+      application.gettingAnalyticsProjectDomain false
       application.analyticsTimePopVisible.toggle()
+
+    toggleAnalyticsProjectDomain: (event) ->
+      event.stopPropagation()
+      application.analyticsTimePopVisible false
+      application.gettingAnalyticsProjectDomain.toggle()
 
 #     hiddenIfGettingAnalytics: ->
 #       'hidden' if application.gettingAnalytics()
@@ -269,10 +267,11 @@ module.exports = (application, teamOrProject) ->
   #   self.drawCharts()
 
   window.addEventListener 'resize', _.throttle ->
-    # PK: this will cause us to fetch new data and totally rerender the table on resize
-    # especially for the fetch, I don't think it makes sense to tie to resize
-    self.getAnalyticsData application.analyticsFromDate()
-  , 200
+    Plotly.Plots.resize(self.remixesChartElement)
+    Plotly.Plots.resize(self.remixesReferrersBars)
+    Plotly.Plots.resize(self.visitsChartElement)
+    Plotly.Plots.resize(self.visitsReferrersBars)
+  , 50
 
   if typeof Plotly != undefined
     self.getAnalyticsData application.analyticsFromDate()

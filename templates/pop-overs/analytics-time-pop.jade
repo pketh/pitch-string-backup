@@ -1,19 +1,16 @@
 dialog.pop-over.results-list.analytics-time-pop(class=@hiddenUnlessAnalyticsTimePopVisible click=@stopPropagation)
 
-  - # section.pop-over-info
-  - #   input#team-user-search.pop-over-input.search-input.pop-over-search(input=@search keyup=@spacekeyDoesntClosePop placeholder="Search for a user or email")
-
   section.pop-over-info
-    .pop-title Time Frames
+    .pop-title Select a Time Frame
 
   section.pop-over-actions.last-section
     ul.results
-      li.result(click=@selectWeeksFrame)
+      li.result(click=@selectMonthFrame class=@activeIfLabelIsMonths)
         .result-container
-          .result-name.result-info Last 2 Weeks
-      li.result(click=@selectMonthFrame)
+          .result-name Last Month
+      li.result(click=@selectWeeksFrame class=@activeIfLabelIsWeeks)
         .result-container
-          .result-name.result-info Last Month
-      li.result(click=@selectHoursFrame)
+          .result-name Last 2 Weeks
+      li.result(click=@selectHoursFrame class=@activeIfLabelIsHours)
         .result-container
-          .result-name.result-info Last 24 Hours
+          .result-name Last 24 Hours

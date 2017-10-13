@@ -1,5 +1,5 @@
 section.analytics
-  script(src="https://cdn.plot.ly/plotly-latest.min.js")
+  script(src="https://cdn.plot.ly/plotly-latest.min.js" load=@plotlyLoad)
 
   h2 Stats
   
@@ -13,7 +13,7 @@ section.analytics
         = @analyticsTimePopPresenter
       .button-wrap
         button.button-small.button-tertiary All Projects
-      = @remixesChart
+      = @remixesChartElement
       - if @showRemixesReferrers
         h3 From
         = @remixesReferrersBars
@@ -25,7 +25,7 @@ section.analytics
         span.emoji.emoji-in-title.eyes
       button.button.button-small.button-tertiary Last 2 Weeks
       button.button-small.button-tertiary All Projects
-      = @visitsChart
+      = @visitsChartElement
       - if @showVisitsReferrers
         h3 From
         = @visitsReferrersBars

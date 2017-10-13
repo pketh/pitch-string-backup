@@ -61,8 +61,8 @@ self = Model(
 
   # analytics
   gettingAnalytics: Observable true
-  gettingAnalyticsFromDate: Observable false #
-  gettingAnalyticsProjectDomain: Observable false # 
+  gettingAnalyticsFromDate: Observable false
+  gettingAnalyticsProjectDomain: Observable false
   analyticsFromDate: Observable 0
   analyticsProjectDomain: Observable '' #
   analyticsTimeLabel: Observable 'Last 2 Weeks'
