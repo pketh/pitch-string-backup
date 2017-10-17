@@ -346,6 +346,13 @@ module.exports = (application, teamOrProject) ->
     hiddenUnlessGettingAnalyticsProjectDomain: ->
       'hidden' unless self.gettingAnalyticsProjectDomain()
 
+    currentUserIsOnTeam: ->
+      application.team().currentUserIsOnTeam application
+
+    hiddenUnlessCurrentUserIsOnTeam: ->
+      'hidden' unless self.currentUserIsOnTeam application
+
+        
   window.addEventListener 'resize', _.throttle ->
     Plotly.Plots.resize(self.remixesChartElement)
     Plotly.Plots.resize(self.remixesReferrersBars)
