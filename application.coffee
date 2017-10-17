@@ -30,7 +30,7 @@ self = Model(
   overlayProjectVisible: Observable false
   overlayProject: Observable undefined
   overlayVideoVisible: Observable false
-  
+
   # pop overs
   signInPopVisibleOnHeader: Observable false
   signInPopVisibleOnRecentProjects: Observable false
@@ -38,8 +38,6 @@ self = Model(
   ctaPopVisible: Observable false
   addTeamUserPopVisible: Observable false
   addTeamProjectPopVisible: Observable false
-  analyticsTimePopVisible: Observable false
-  analyticsProjectsPopVisible: Observable false
 
   # search - users
   searchQuery: Observable ""
@@ -61,12 +59,12 @@ self = Model(
   searchResultsHaveNoTeams: Observable false
 
   # analytics
-  gettingAnalytics: Observable true
-  gettingAnalyticsFromDate: Observable false
-  gettingAnalyticsProjectDomain: Observable false
-  analyticsFromDate: Observable 0
-  analyticsProjectDomain: Observable 'All Projects'
-  analyticsTimeLabel: Observable 'Last 2 Weeks'
+  # gettingAnalytics: Observable true
+  # gettingAnalyticsFromDate: Observable false
+  # gettingAnalyticsProjectDomain: Observable false
+  # analyticsFromDate: Observable 0
+  # analyticsProjectDomain: Observable 'All Projects'
+  # analyticsTimeLabel: Observable 'Last 2 Weeks'
 
   # questions
   questions: Observable []
@@ -121,7 +119,6 @@ self = Model(
     self.addTeamProjectPopVisible false
     self.overlayProjectVisible false
     self.overlayVideoVisible false
-    self.analyticsTimePopVisible false
 
   searchProjects: (query) ->
     self.searchResultsProjects []

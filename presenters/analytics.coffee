@@ -1,10 +1,10 @@
 # todo convert to async await fetch
-# todo do 
-# accessibility w hidden tables
-# todo views -> visits
+# todo do accessibility w hidden tables
+
 Observable = require 'o_0'
 axios = require 'axios'
 _ = require 'underscore'
+moment = require 'moment'
 
 AnalyticsTemplate = require "../templates/includes/analytics"
 AnalyticsTimePopPresenter = require "./pop-overs/analytics-time-pop"
@@ -16,9 +16,24 @@ REFERRER_VALUES = ["remixes", "requests"]
 COLORS = ["#70ECFF", "#F2A2FF"]
 LINE_COLOR = "#c3c3c3"
 BACKGROUND_COLOR = '#f5f5f5'
-HEIGHTS = [200, 200]
+# HEIGHTS = [200, 200]
 
+twoWeeks = moment().subtract(2, 'weeks').valueOf()
+oneMonth = moment().subtract(1, 'months').valueOf()
+oneDay = moment().subtract(24, 'hours').valueOf()
 
+# Crack open a promise so anyone can resolve or reject it later
+OpenPromise = ->
+  resolve = null
+  reject = null
+  p = new Promise (_resolve, _reject) ->
+    resolve = _resolve
+    reject = _reject
+
+  p.resolve = resolve
+  p.reject = reject
+
+  return p
 
 sum = (array) ->
   array.reduce (a, b) ->
@@ -26,27 +41,31 @@ sum = (array) ->
   , 0
 
 module.exports = (application, teamOrProject) ->
+  plotlyPromise = OpenPromise()
+
   self = 
-  
-    analyticsTimeLabel: application.analyticsTimeLabel
-    analyticsProjectDomain: application.analyticsProjectDomain
-    analyticsTimePop: AnalyticsTimePopPresenter application
-    analyticsProjectsPop: AnalyticsProjectsPopPresenter application
+
+    # analyticsTimeLabel: application.analyticsTimeLabel
+    # analyticsProjectDomain: application.analyticsProjectDomain
 
     remixesChartElement: document.createElement 'div'
     remixesReferrersBars: document.createElement 'referrer-bars'
-  
+
     visitsChartElement: document.createElement 'div'
     visitsReferrersBars: document.createElement 'referrer-bars'
+
+    gettingAnalytics: Observable true
+    gettingAnalyticsFromDate: Observable false
+    gettingAnalyticsProjectDomain: Observable false
+    analyticsFromDate: Observable twoWeeks
+    analyticsProjectDomain: Observable 'All Projects'
+    analyticsTimeLabel: Observable 'Last 2 Weeks'
     
     showRemixesReferrers: Observable false
     totalRemixes: Observable 0
     showVisitsReferrers: Observable false
     totalVisits: Observable 0
     
-    analyticsData: Observable {}
-    chartData: Observable {}
-
     # PK: width of what text? is this a character spacing thing?
     # ET: this is the method we use to calculate the left margin of the two charts
     #     this way, the two charts have the same left margin
@@ -84,32 +103,62 @@ module.exports = (application, teamOrProject) ->
       ranges: maxes.map (max) ->
         if max >= 3 then undefined else [0, 3]
 
-    drawCharts: (chartData) ->
+    initCharts: ->
       console.log 'Plotly ready', Plotly
-      {leftMargin, ranges} = calculatedParams = self.calculateParams(chartData)
-      console.log 'calculateParams', calculatedParams
-      
-      # PK: instead of one big args object and unwrapping, would this be clearer if broken up into 
-      # seperate graphdiv, data, and layout objects to pass to plotly so that'd it'd match the docs:
-      # Plotly.newPlot(graphDiv, data, layout);
-      
-      [remixData, visitsData] = chartData.map (data, i) ->
-        total = sum data.y
-        console.log '🐬 chartdata total', total
+
+      elements = [
+        self.remixesChartElement
+        self.visitsChartElement
+      ]
+      elements.map (element, i) ->
+        data =
+          marker:
+            color: COLORS[i]
+          type: 'histogram'
+          histfunc: "sum"
+          nbinsx: 28
 
         layout =
           paper_bgcolor: BACKGROUND_COLOR
           plot_bgcolor: BACKGROUND_COLOR
           font:
             family: '"Benton Sans",Helvetica,Sans-serif'
+          height: 200
+          margin:
+            l: 0
+            r: 0
+            b: 50
+            t: 10
+            pad: 0
+          bargap: 0.2
+
+        options =
+          displayModeBar: false
+
+        Plotly.newPlot element, [data], layout, options
+
+    updateCharts: (analyticsData) ->
+      chartData = self.mapChartData(analyticsData)
+
+      self.updateTotals(chartData)
+
+      {leftMargin, ranges} = calculatedParams = self.calculateParams(chartData)
+      console.log 'calculateParams', calculatedParams
+
+      elements = [
+        self.remixesChartElement
+        self.visitsChartElement
+      ]
+
+      chartData.map (data, i) ->
+
+        layout =
           margin:
             l: leftMargin
             r: 0
             b: 50
             t: 10
             pad: 0
-          height: HEIGHTS[i]
-          bargap: 0.2
           xaxis:
             zeroline: false
             showline: true
@@ -117,38 +166,80 @@ module.exports = (application, teamOrProject) ->
             type: "date"
             showgrid: true
             autorange: false
-            fixedrange: true
-            range: [data.x[0].getTime() - 3600000, data.x[data.x.length-1].getTime() + 4 * 3600000]          
-            tickangle: 1e-10 # to have it aligned to the right of the tick
+            fixedrange: true         
+            tickangle: 1e-10 # to have it aligned to the right of the tick          xaxis:
+            range: [data.x[0].getTime() - 3600000, data.x[data.x.length-1].getTime() + 4 * 3600000]
           yaxis:
             fixedrange: true
             rangemode: "nonnegative"
-            range: ranges[i]
             tickformat: ',dr'
             zeroline: false
+            range: ranges[i]
+
+
+        data.x = [data.x]
+        data.y = [data.y]
+
+        element = elements[i]
+        Plotly.update element, data, layout
+
+    drawCharts: (chartData) ->
+      self.initCharts()
+      self.updateCharts(chartData)
+
+    updateTotals: ([remixData, visitsData]) ->
+      formatter = Plotly.d3.format(',dr')
+      self.totalRemixes formatter sum remixData.y
+      self.totalVisits formatter sum visitsData.y
+      
+    initReferrers: ->
+      elements = [
+        self.remixesReferrersBars
+        self.visitsReferrersBars
+      ]
+
+      elements.map (element, i) ->
+        data =
+          hoverinfo: 'none'
+          marker:
+            color: COLORS[i]
+          type: 'bar'
+          orientation: 'h'
+
+        layout =
+          paper_bgcolor: BACKGROUND_COLOR
+          plot_bgcolor: BACKGROUND_COLOR
+          font:
+            family: '"Benton Sans",Helvetica,Sans-serif'
+            size: 14
+          margin:
+            l: 0
+            r: 10
+            b: 10
+            t: 10
+            pad: 0
+          barwidth: 20
+          xaxis:
+            showticklabels: false
+            showgrid: false
+            zeroline: false
+            fixedrange: true
+          yaxis:
+            showticklabels: false
+            fixedrange: true
 
         options =
           displayModeBar: false
 
-        console.log '[[data], layout, options, total]', [[data], layout, options, total]
-        return [[data], layout, options, total]
+        Plotly.newPlot element, [data], layout, options
+        
+    updateReferrers: (analyticsData) ->
+      elements = [
+        self.remixesReferrersBars
+        self.visitsReferrersBars
+      ]
 
-      if remixData[3] > 0
-        [lines, layout, options, total] = remixData
-        self.totalRemixes total
-        Plotly.newPlot self.remixesChartElement, lines, layout, options
-      else
-        self.remixesChart.innerHTML = "<b>No remixes in the selected timespan</b>" # replace with local observables that trigger error state in template                    
-
-      if visitsData[3] > 0
-        [lines, layout, options, total] = visitsData
-        self.totalVisits total
-        Plotly.newPlot self.visitsChartElement, lines, layout, options
-      else
-        self.visitsChart.innerHTML = "<b>No visits in the selected timespan</b>" # replace with local observables that trigger error state in template
-
-    drawReferrers: (analyticsData) ->
-      args = REFERRER_FIELDS.map (field, i) ->
+      REFERRER_FIELDS.map (field, i) ->
         total = analyticsData[field].reduce (a, b) ->
           "#{REFERRER_VALUES[i]}": a[REFERRER_VALUES[i]] + b[REFERRER_VALUES[i]]
         , { "#{REFERRER_VALUES[i]}": 0 }
@@ -164,15 +255,11 @@ module.exports = (application, teamOrProject) ->
         unless referrers.length > 0
           return null
 
+        # NOTE: Plotly.restyle wants the arrays pushed down into the trace values YOLO!
         data =
-          x: referrers.map (r) -> r.value
-          y: referrers.map (r) -> r.domain
-          hoverinfo: 'none'
-          marker:
-            color: COLORS[i]
-          type: 'bar'
-          orientation: 'h'
-
+          x: [referrers.map (r) -> r.value]
+          y: [referrers.map (r) -> r.domain]
+        
         layout =
           annotations: referrers.map (r) ->
             x: 0
@@ -181,104 +268,84 @@ module.exports = (application, teamOrProject) ->
             text: "#{r.value} - #{r.domain}"
             xanchor: "left"
             xshift: 5
-          paper_bgcolor: BACKGROUND_COLOR
-          plot_bgcolor: BACKGROUND_COLOR
-          font:
-            family: '"Benton Sans",Helvetica,Sans-serif'
-            size: 14
-          margin:
-            l: 0
-            r: 10
-            b: 10
-            t: 10
-            pad: 0
           height: 20 + 30 * referrers.length
-          barwidth: 20
-          xaxis:
-            showticklabels: false
-            showgrid: false
-            zeroline: false
-            fixedrange: true
-          yaxis:
-            showticklabels: false
-            fixedrange: true
-        options =
-          displayModeBar: false
 
-        [[data], layout, options]
+        element = elements[i]
+        Plotly.update element, data, layout
 
-      self.showRemixesReferrers !!args[0]
-      if args[0] # this check is here because of line 203. coolz
-        [lines, layout, options] = args[0]
-        Plotly.newPlot self.remixesReferrersBars, lines, layout, options
-      self.showVisitsReferrers !!args[1]
-      if args[1]
-        Plotly.newPlot self.visitsReferrersBars, args[1]...
+    drawReferrers: (analyticsData) ->
+      self.initReferrers()
+      self.updateReferrers(analyticsData)
     
     mapChartData: (data) ->
       {buckets} = data
-      chartData = METRICS.map (metric, i) ->
+
+      METRICS.map (metric, i) ->
         x: buckets.map (x) -> new Date x.startTime
         y: buckets.map (y) -> y.analytics[metric] ? 0
-        marker:
-          color: COLORS[i]
-        type: 'histogram'
-        histfunc: "sum"
-        nbinsx: 28
-      self.chartData chartData
 
     plotlyLoad: (e) ->
       console.log "Plotly Load", e
-      self.getAnalyticsData()
+      self.initReferrers()
+      self.initCharts()
+
+      plotlyPromise.resolve()      
 
     getAnalyticsData: (fromDate, projectDomain) ->
       # TODO: We can get the analytics data before plotly finishes loading
       id = teamOrProject.id()
       CancelToken = axios.CancelToken
       source = CancelToken.source()
-      if application.analyticsProjectDomain() is 'All Projects'
-        analyticsPath = "analytics/#{id}/team?from=#{application.analyticsFromDate()}"
+      if self.analyticsProjectDomain() is 'All Projects'
+        analyticsPath = "analytics/#{id}/team?from=#{self.analyticsFromDate()}"
       else
-        analyticsPath = "analytics/#{id}/project/#{application.analyticsProjectDomain()}?from=#{application.analyticsFromDate()}"
+        analyticsPath = "analytics/#{id}/project/#{self.analyticsProjectDomain()}?from=#{self.analyticsFromDate()}"
 
       application.api(source).get analyticsPath
       .then ({data}) ->
-        application.gettingAnalytics false
-        application.gettingAnalyticsFromDate false
-        application.gettingAnalyticsProjectDomain false
-        self.analyticsData data
-        self.mapChartData data
-        console.log "▶️ self.chartData", self.chartData()
-        # TODO: Let the charts redraw themselves rather than redraw them manually
-        self.drawCharts(self.chartData())
-        self.drawReferrers(self.analyticsData())
-      .catch (error) ->
-        console.error 'getAnalyticsData', error
+        plotlyPromise.then ->
+          self.gettingAnalytics false
+          self.gettingAnalyticsFromDate false
+          self.gettingAnalyticsProjectDomain false
+
+          self.updateCharts(data)
+          self.updateReferrers(data)
 
     toggleAnalyticsTimePop: (event) ->
       event.stopPropagation()
-      application.analyticsProjectsPopVisible false
-      application.analyticsTimePopVisible.toggle()
+      element = event.currentTarget
+      existingPop = element.querySelector(".analytics-time-pop")
+      if existingPop
+        application.closeAllPopOvers()
+      else
+        element.appendChild AnalyticsTimePopPresenter application, self
 
     toggleAnalyticsProjectsPop: (event) ->
       event.stopPropagation()
-      application.analyticsTimePopVisible false
-      application.analyticsProjectsPopVisible.toggle()
+      element = event.currentTarget
+      existingPop = element.querySelector(".analytics-projects-pop")
+      if existingPop
+        application.closeAllPopOvers()
+      else
+        element.appendChild AnalyticsProjectsPopPresenter application, self
 
-#     hiddenIfGettingAnalytics: ->
-#       'hidden' if application.gettingAnalytics()
+    hiddenUnlessGettingAnalytics: ->
+      'hidden' unless self.gettingAnalytics()
 
-#     hiddenUnlessGettingAnalytics: ->
-#       'hidden' unless application.gettingAnalytics()
+    hiddenUnlessGettingAnalyticsFromDate: ->
+      'hidden' unless self.gettingAnalyticsFromDate()
 
-  # self.chartData.observe (value) ->
-  #   self.drawCharts()
+    hiddenUnlessGettingAnalyticsProjectDomain: ->
+      'hidden' unless self.gettingAnalyticsProjectDomain()
 
   window.addEventListener 'resize', _.throttle ->
     Plotly.Plots.resize(self.remixesChartElement)
     Plotly.Plots.resize(self.remixesReferrersBars)
     Plotly.Plots.resize(self.visitsChartElement)
     Plotly.Plots.resize(self.visitsReferrersBars)
-  , 50    
+  , 50
+  
+  self.getAnalyticsData()
+
 
   return AnalyticsTemplate self

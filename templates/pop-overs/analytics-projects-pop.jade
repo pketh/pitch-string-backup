@@ -1,21 +1,20 @@
 - ProjectResultPresenter = require "../../presenters/project-result"
+- bentoBox = 'https://cdn.glitch.com/55f8497b-3334-43ca-851e-6c9780082244%2Fbento-box.png?1502469566743'
 
-dialog.pop-over.results-list.analytics-projects-pop(class=@hiddenUnlessAnalyticsProjectsPopVisible click=@stopPropagation)
+dialog.pop-over.results-list.analytics-projects-pop.disposable(click=@stopPropagation)
 
   section.pop-over-info
-    .pop-title Select a Project
-  section.pop-over-info
-    input.pop-over-input.search-input.pop-over-search(input=@filter keyup=@spacekeyDoesntClosePop placeholder="Filter projects")
+    input#analytics-project-search.pop-over-input.search-input.pop-over-search(input=@filter keyup=@spacekeyDoesntClosePop placeholder="Filter projects")
 
   section.pop-over-actions.last-section
     ul.results
-      li.result
-        .result-container
-          .result-name All Projects
-      
-      li.result
-        .result-container
-          .result-name P1
-      li.result
-        .result-container
-          .result-name P2
+      .result-container(class=@activeIfAllProjects click=@selectAllProjects)
+        li.result
+          .result-information
+            img.result-avatar(src=bentoBox)
+            .result-name All Projects
+
+      - options = {}
+      - analytics = @analytics
+      - @teamProjects().forEach (project) ->
+        = ProjectResultPresenter(application, project, options, analytics)

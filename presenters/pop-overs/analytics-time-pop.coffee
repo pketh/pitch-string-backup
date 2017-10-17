@@ -6,44 +6,44 @@ twoWeeks = moment().subtract(2, 'weeks').valueOf()
 oneMonth = moment().subtract(1, 'months').valueOf()
 oneDay = moment().subtract(24, 'hours').valueOf()
 
-module.exports = (application) ->
+module.exports = (application, analytics) ->
 
   self =
   
     application: application
   
-    hiddenUnlessAnalyticsTimePopVisible: ->
-      'hidden' unless application.analyticsTimePopVisible()
+    # hiddenUnlessAnalyticsTimePopVisible: ->
+    #   'hidden' unless application.analyticsTimePopVisible()
 
     stopPropagation: (event) ->
       event.stopPropagation()
 
     selectMonthFrame: ->
-      application.analyticsTimeLabel 'Last Month'
-      application.analyticsFromDate oneMonth
-      application.gettingAnalyticsFromDate true
-      
+      analytics.analyticsTimeLabel 'Last Month'
+      analytics.analyticsFromDate oneMonth
+      analytics.gettingAnalyticsFromDate true
+
     selectWeeksFrame: ->
-      application.analyticsTimeLabel 'Last 2 Weeks'
-      application.analyticsFromDate twoWeeks
-      application.gettingAnalyticsFromDate true
-    
+      analytics.analyticsTimeLabel 'Last 2 Weeks'
+      analytics.analyticsFromDate twoWeeks
+      analytics.gettingAnalyticsFromDate true
+
     selectHoursFrame: ->
-      application.analyticsTimeLabel 'Last 24 Hours'
-      application.analyticsFromDate oneDay
-      application.gettingAnalyticsFromDate true
+      analytics.analyticsTimeLabel 'Last 24 Hours'
+      analytics.analyticsFromDate oneDay
+      analytics.gettingAnalyticsFromDate true
 
     activeIfLabelIsMonths: ->
-      'active' if application.analyticsTimeLabel() is 'Last Month'
-        
+      'active' if analytics.analyticsTimeLabel() is 'Last Month'
+
     activeIfLabelIsWeeks: ->
-      'active' if application.analyticsTimeLabel() is 'Last 2 Weeks'
+      'active' if analytics.analyticsTimeLabel() is 'Last 2 Weeks'
 
     activeIfLabelIsHours: ->
-      'active' if application.analyticsTimeLabel() is 'Last 24 Hours'
-      
+      'active' if analytics.analyticsTimeLabel() is 'Last 24 Hours'
 
-  if !application.analyticsFromDate()
-    application.analyticsFromDate twoWeeks
+
+  if !analytics.analyticsFromDate()
+    analytics.analyticsFromDate twoWeeks
 
   return AnalyticsTimePopTemplate self

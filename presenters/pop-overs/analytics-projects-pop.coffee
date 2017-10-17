@@ -3,30 +3,38 @@ Observable = require 'o_0'
 
 AnalyticsProjectsPopTemplate = require "../../templates/pop-overs/analytics-projects-pop"
 
-module.exports = (application) ->
+module.exports = (application, analytics) ->
 
   self =
   
-    application: application
-  
-    query: Observable ""
+    application: application  
+    teamProjects: Observable application.team().projects()
+    analytics: analytics
 
-    hiddenUnlessAnalyticsProjectsPopVisible: ->
-      'hidden' unless application.analyticsProjectsPopVisible()
+    # hiddenUnlessAnalyticsProjectsPopVisible: ->
+    #   'hidden' unless application.analyticsProjectsPopVisible()
     
     stopPropagation: (event) ->
       event.stopPropagation()
 
     filter: (event) ->
       query = event.target.value.trim()
-      self.query query
+      projects = application.team().projects()
+      if query.length
+        filtered = projects.filter (project) ->
+          project.domain().match(query) or project.description().match(query)
+        self.teamProjects filtered
+      else
+        self.teamProjects projects
 
     spacekeyDoesntClosePop: (event) ->
       event.stopPropagation()
-      event.preventDefault()    
-    
-    filteredResults: ->
-      console.log self.query()
+      event.preventDefault()
 
+    activeIfAllProjects: ->
+      'active' if analytics.analyticsProjectDomain() is 'All Projects'
 
+    selectAllProjects: ->
+      analytics.analyticsProjectDomain 'All Projects'
+        
   return AnalyticsProjectsPopTemplate self
