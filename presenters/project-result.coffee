@@ -24,19 +24,20 @@ module.exports = (application, project, options, analytics) ->
     addProjectToTeam: ->
       console.log "adding #{project.name()} to #{application.team().id()}"
       application.team().addProject application, project
-      application.closeAllPopOvers()
+      # application.closeAllPopOvers()
 
     setAnalyticsProjectDomain: ->
       console.log "setting analytics to #{project.domain()}"
       analytics.analyticsProjectDomain project.domain()
       analytics.gettingAnalyticsProjectDomain true
-      application.closeAllPopOvers()
+      # application.closeAllPopOvers()
 
     projectAction: ->
       if options.addProjectToTeam
         self.addProjectToTeam()
       else if analytics
         self.setAnalyticsProjectDomain()
+      # event.preventDefault()
 
     projectResultKey: (event) ->
       ENTER = 13
@@ -50,5 +51,8 @@ module.exports = (application, project, options, analytics) ->
       console.log "🐸",analytics
       if analytics.analyticsProjectDomain() is project.domain()
         'active'
-      
+    
+    preventDefault: (event) ->
+      event.preventDefault()
+    
   return ProjectResultTemplate self

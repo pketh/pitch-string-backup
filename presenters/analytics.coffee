@@ -57,13 +57,21 @@ module.exports = (application, teamOrProject) ->
     gettingAnalytics: Observable true
     gettingAnalyticsFromDate: Observable false
     gettingAnalyticsProjectDomain: Observable false
-    analyticsFromDate: Observable twoWeeks
+    # analyticsFromDate: Observable twoWeeks
     analyticsProjectDomain: Observable 'All Projects'
     analyticsTimeLabel: Observable 'Last 2 Weeks'
     
-    showRemixesReferrers: Observable false
+    analyticsFromDate: ->
+      if self.analyticsTimeLabel() is 'Last Month'
+        oneMonth
+      else if self.analyticsTimeLabel() is 'Last 24 Hours'
+        oneDay
+      else
+        twoWeeks
+    
+    # showRemixesReferrers: Observable false
     totalRemixes: Observable 0
-    showVisitsReferrers: Observable false
+    # showVisitsReferrers: Observable false
     totalVisits: Observable 0
     
     # PK: width of what text? is this a character spacing thing?
@@ -292,14 +300,14 @@ module.exports = (application, teamOrProject) ->
       plotlyPromise.resolve()      
 
     getAnalyticsData: (fromDate, projectDomain) ->
-      # TODO: We can get the analytics data before plotly finishes loading
+      self.gettingAnalytics true
       id = teamOrProject.id()
       CancelToken = axios.CancelToken
       source = CancelToken.source()
-      if self.analyticsProjectDomain() is 'All Projects'
-        analyticsPath = "analytics/#{id}/team?from=#{self.analyticsFromDate()}"
+      if projectDomain is 'All Projects'
+        analyticsPath = "analytics/#{id}/team?from=#{fromDate}"
       else
-        analyticsPath = "analytics/#{id}/project/#{self.analyticsProjectDomain()}?from=#{self.analyticsFromDate()}"
+        analyticsPath = "analytics/#{id}/project/#{projectDomain}?from=#{fromDate}"
 
       application.api(source).get analyticsPath
       .then ({data}) ->
@@ -315,18 +323,18 @@ module.exports = (application, teamOrProject) ->
       event.stopPropagation()
       element = event.currentTarget
       existingPop = element.querySelector(".analytics-time-pop")
-      if existingPop
-        application.closeAllPopOvers()
-      else
+      application.closeAllPopOvers()
+
+      unless existingPop
         element.appendChild AnalyticsTimePopPresenter application, self
 
     toggleAnalyticsProjectsPop: (event) ->
       event.stopPropagation()
       element = event.currentTarget
       existingPop = element.querySelector(".analytics-projects-pop")
-      if existingPop
-        application.closeAllPopOvers()
-      else
+      application.closeAllPopOvers()
+
+      unless existingPop
         element.appendChild AnalyticsProjectsPopPresenter application, self
 
     hiddenUnlessGettingAnalytics: ->
@@ -344,8 +352,12 @@ module.exports = (application, teamOrProject) ->
     Plotly.Plots.resize(self.visitsChartElement)
     Plotly.Plots.resize(self.visitsReferrersBars)
   , 50
-  
-  self.getAnalyticsData()
 
+  # Bind a function to rerun and fetch the analytics data when the dependent observables change
+  Observable ->
+    fromDate = self.analyticsFromDate()
+    projectDomain = self.analyticsProjectDomain()
+
+    self.getAnalyticsData(fromDate, projectDomain)
 
   return AnalyticsTemplate self

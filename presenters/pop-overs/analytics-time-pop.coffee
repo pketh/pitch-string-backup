@@ -20,17 +20,17 @@ module.exports = (application, analytics) ->
 
     selectMonthFrame: ->
       analytics.analyticsTimeLabel 'Last Month'
-      analytics.analyticsFromDate oneMonth
+      # analytics.analyticsFromDate oneMonth
       analytics.gettingAnalyticsFromDate true
 
     selectWeeksFrame: ->
       analytics.analyticsTimeLabel 'Last 2 Weeks'
-      analytics.analyticsFromDate twoWeeks
+      # analytics.analyticsFromDate twoWeeks
       analytics.gettingAnalyticsFromDate true
 
     selectHoursFrame: ->
       analytics.analyticsTimeLabel 'Last 24 Hours'
-      analytics.analyticsFromDate oneDay
+      # analytics.analyticsFromDate oneDay
       analytics.gettingAnalyticsFromDate true
 
     activeIfLabelIsMonths: ->
@@ -42,8 +42,5 @@ module.exports = (application, analytics) ->
     activeIfLabelIsHours: ->
       'active' if analytics.analyticsTimeLabel() is 'Last 24 Hours'
 
-
-  if !analytics.analyticsFromDate()
-    analytics.analyticsFromDate twoWeeks
 
   return AnalyticsTimePopTemplate self

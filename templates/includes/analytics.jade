@@ -1,6 +1,7 @@
 - Loader = require "./loader"
 
 section.analytics
+  - console.log "Rendered Analytics"
   script(src="https://cdn.plot.ly/plotly-latest.min.js" load=@plotlyLoad async="4eva")
 
   h2 Stats
@@ -21,9 +22,8 @@ section.analytics
       
     = @remixesChartElement
     
-    - if @showRemixesReferrers
-      h3 From
-      = @remixesReferrersBars
+    h3.from-header From
+    = @remixesReferrersBars
 
   .chart-container
     span(class=@hiddenUnlessGettingAnalytics)= Loader
@@ -43,6 +43,5 @@ section.analytics
 
     = @visitsChartElement
 
-    - if @showVisitsReferrers
-      h3 From
-      = @visitsReferrersBars
+    h3.from-header From
+    = @visitsReferrersBars
